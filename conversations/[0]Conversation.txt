@@ -1,0 +1,12 @@
+## Benutzer
+How can I only show my Date with this Binding and hide the time?
+<Label Text="{Binding Pet.Details.Birthdate}" Grid.Column="1" Grid.Row="2"/>
+## Bing
+To display only the date portion of a DateTime property in a MAUI project, you can use the StringFormat attribute. Here's how you can modify your Label binding to achieve this:
+
+<Label Text="{Binding MyDate, StringFormat='{0:d}'}" />
+
+In this example:
+- {0} refers to the value passed from the binding (in this case, your MyDate property).
+- :d specifies the short date format, which will show only the date without the time component.
+Feel free to adapt this approach to your specific use case! 😊

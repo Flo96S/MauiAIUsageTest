@@ -1,0 +1,42 @@
+## Benutzer
+Can you generate me a C# summary with parameters and return value for following code?
+public async Task<List<Classes.WeightConverted>> GetWeight(string petid, bool all)
+{
+List<Classes.WeightConverted> list = new();
+string token = Preferences.Get("token", "");
+string userid = Preferences.Get("id", "");
+try
+{
+var result = await client.GetAsync(url + $"/v1/weight?user={userid}&token={token}&pet={petid}&all={all}");
+if (!result.IsSuccessStatusCode)
+{
+return list;
+}
+string json = await result.Content.ReadAsStringAsync();
+list = JsonSerializer.Deserialize<List<Classes.WeightConverted>>(json) ?? new();
+}
+catch (Exception ex)
+{
+EndpointHandler handler = new();
+handler.SendError(ex.Message);
+}
+return list;
+}
+## Bing
+Here is a summary of your C# method:
+
+/// <summary>
+/// Asynchronously retrieves the weight of a specified pet.
+/// </summary>
+/// <param name="petid">The ID of the pet.</param>
+/// <param name="all">A boolean value indicating whether to retrieve all weights.</param>
+/// <returns>
+/// A task that represents the asynchronous operation. The task result contains a list of weight data converted into a specific class format.
+/// If the operation is unsuccessful, an empty list is returned.
+/// </returns>
+public async Task<List<Classes.WeightConverted>> GetWeight(string petid, bool all)
+{
+    ...
+}
+
+This method is asynchronous and returns a Task with a result of type List<Classes.WeightConverted>. The method takes two parameters: petid of type string which represents the ID of the pet, and all of type bool which indicates whether to retrieve all weights. If the operation is unsuccessful, the method returns an empty list. Otherwise, it returns a list of weight data converted into a specific class format. The method also handles exceptions by sending error messages to an EndpointHandler.

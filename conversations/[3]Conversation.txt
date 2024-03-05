@@ -1,0 +1,125 @@
+## Benutzer
+I have this code snippet:
+public void GetDataPets()
+{
+Task.Run(async () =>
+{
+EndpointHandler handler = new();
+var result = await handler.GetTotalInformation();
+try
+{
+Observable = new();
+Invites = new();
+if (result.success)
+{
+if(result.infos.Animals != null)
+{
+foreach (AnimalClass ac in result.infos.Animals)
+{
+Observable.Add(ac);
+}
+}
+if(result.infos.Invites != null)
+{
+foreach (Invites inv in result.infos.Invites)
+{
+Invites.Add(inv);
+}
+}
+}
+else
+{
+Debug.WriteLine("Error");
+MainThread.BeginInvokeOnMainThread(async () =>
+{
+if (App.Current == null || App.Current.MainPage == null) return;
+await App.Current.MainPage.DisplayAlert("Could not load", "Error", "Ok");
+});
+}
+}
+catch(Exception ex)
+{
+MainThread.BeginInvokeOnMainThread(async () =>
+{
+if (App.Current == null || App.Current.MainPage == null) return;
+await App.Current.MainPage.DisplayAlert("Could not load", ex.Message, "Ok");
+});
+}
+});
+}
+And these are the viewmodel property for it:
+private ObservableCollection<Invites> invites = new();
+public ObservableCollection<Invites> Invites
+{
+get { return invites; }
+set
+{
+invites = value;
+OnPropertyChanged("Invites");
+}
+}
+Why is my ui not chaning when I call the function?
+## Bing
+It seems like the issue might be related to the way the ObservableCollection is being handled. When you're updating the ObservableCollection, you should ensure that the changes are made on the UI thread to properly notify the UI to update. Here's a revised version of your GetDataPets method:
+
+public void GetDataPets()
+{
+    Task.Run(async () =>
+    {
+        EndpointHandler handler = new();
+        var result = await handler.GetTotalInformation();
+        try
+        {
+            if (result.success)
+            {
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    Observable.Clear();
+                    Invites.Clear();
+                    if (result.infos.Animals != null)
+                    {
+                        foreach (AnimalClass ac in result.infos.Animals)
+                        {
+                            Observable.Add(ac);
+                        }
+                    }
+                    if (result.infos.Invites != null)
+                    {
+                        foreach (Invites inv in result.infos.Invites)
+                        {
+                            Invites.Add(inv);
+                        }
+                    }
+                });
+            }
+            else
+            {
+                Debug.WriteLine("Error");
+                MainThread.BeginInvokeOnMainThread(async () =>
+                {
+                    if (App.Current == null || App.Current.MainPage == null) return;
+                    await App.Current.MainPage.DisplayAlert("Could not load", "Error", "Ok");
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            MainThread.BeginInvokeOnMainThread(async () =>
+            {
+                if (App.Current == null || App.Current.MainPage == null) return;
+                await App.Current.MainPage.DisplayAlert("Could not load", ex.Message, "Ok");
+            });
+        }
+    });
+}
+
+In this revised code, I've moved the updates to the Observable and Invites collections inside the MainThread.BeginInvokeOnMainThread call. This ensures that the collections are updated on the UI thread, which is necessary for the UI to recognize the changes and update accordingly.
+Additionally, I replaced the instantiation of new ObservableCollection objects with calls to Clear(). This maintains the same collection instances, which is important because the UI is bound to these instances and won't recognize new instances without additional code to rebind the UI.
+If the UI is still not updating, make sure that the OnPropertyChanged method is correctly implemented in your ViewModel to notify the UI of property changes. It should look something like this:
+
+protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+{
+    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+}
+
+Remember to implement INotifyPropertyChanged in your ViewModel and declare the PropertyChanged event. This pattern is essential for data binding in MVVM architectures.
